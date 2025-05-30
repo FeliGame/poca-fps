@@ -472,9 +472,8 @@ MonoBehaviour:
   mouseSensitivity: 0.02
   gravity: -9.81
   head: {fileID: 4523953535488826847}
-  damage: 20
+  damage: 30
   fireInterval: 0.1
-  range: 100
 --- !u!114 &560259182750490267
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -19,12 +19,13 @@ public class PlayerController : MonoBehaviour
     private float jumpForce = 20f;
 
     [Header("Weapon")]
-    public float damage = 20f;
+    public float damage = 30f;
     public float fireInterval = 0.1f;
-    public float range = 100f;
 
+    private float range = 1000f;
     private CharacterController controller;
     private Vector3 velocity;
+    private Vector3 rayDirection, rayOrigin;
     private bool isGrounded;  // Jump时不能第一时间读取CharacterController的isGrounded，因此用该变量缓存
     private float fireCooldown;
     private float currentPitch = 0f;    // 当前俯仰角
@@ -54,6 +55,13 @@ public class PlayerController : MonoBehaviour
     {
         if (!IsAlive)
             return;
+
+        // 绘制瞄准线
+        rayDirection = head.forward;
+        rayOrigin = head.position + rayDirection * rayOriginOffset;
+
+        float rayDuration = 0f;
+        Debug.DrawRay(rayOrigin, rayDirection, Color.green, rayDuration);
 
         // 速度负值固定
         if (!controller.isGrounded && velocity.y < 0)
@@ -94,7 +102,6 @@ public class PlayerController : MonoBehaviour
     {
         if (isGrounded && IsAlive)
         {
-            Debug.Log("Jumping force..." + jumpForce);
             velocity.y = Mathf.Sqrt(jumpForce);
         }
     }
@@ -122,17 +129,12 @@ public class PlayerController : MonoBehaviour
     {
         if (fireCooldown > 0 || !IsAlive) return;
 
-        Vector3 rayDirection = head.forward;
-        Vector3 rayOrigin = head.position + rayDirection * rayOriginOffset;
-
-        RaycastHit hit;
         // 仅获取最近击中物体
-        if (Physics.Raycast(rayOrigin, rayDirection, out hit, range))
+        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, range))
         {
             Debug.Log("Hitting " + hit.transform.name);
             // 绘制射线
-            float rayDuration = 0.5f;
-            Debug.DrawRay(rayOrigin, rayDirection * hit.distance, Color.red, rayDuration);
+            Debug.DrawRay(rayOrigin, rayDirection * hit.distance, Color.red, 0.5f);
 
             // 检查是否击中敌方队伍的Player
             PlayerController target = hit.transform.GetComponent<PlayerController>();

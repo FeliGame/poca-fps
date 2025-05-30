@@ -91,7 +91,6 @@ public class FPSAgent : Agent
         // 1. Action -> Behavior
         float horizontal = actions.DiscreteActions[0] == 1? 1 : actions.DiscreteActions[0] == 2? -1 : 0;
         float vertical = actions.DiscreteActions[1] == 1? 1 : actions.DiscreteActions[1] == 2? -1 : 0;
-        Vector3 moveDirection = new(horizontal, 0, vertical);
         playerController.MoveXoZ(horizontal, vertical);
 
         int jumpAction = actions.DiscreteActions[2];
