@@ -1,0 +1,7 @@
+Library/
+Logs/
+Temp/
+*.log
+*.local
+.DS_Store
+.vscode/
