@@ -13,7 +13,10 @@ public class GameManager : MonoBehaviour
     public Transform team1SpawnCircle;
     public Transform team2SpawnCircle;
     public float spawnCircleRadius = 5f;
+
+    [Header("Prefabs")]
     public GameObject playerPrefab;
+    public GameObject bulletHolePrefab;
 
     private List<PlayerController> team1Players = new();
     private List<PlayerController> team2Players = new();
@@ -96,6 +99,7 @@ public class GameManager : MonoBehaviour
             Vector3 random3D = new (random2D.x, 0f, random2D.y);
             Vector3 spawnPos = spawnCircle.position + random3D;
             GameObject playerObj = Instantiate(playerPrefab, spawnPos, spawnCircle.rotation, spawnCircle);
+            playerObj.name = "Player_" + teamId + "_" + i;
 
             // Player的行为由Agent先行控制，因此应该调用Agent的初始化函数
             FPSAgent agent = playerObj.GetComponent<FPSAgent>();
