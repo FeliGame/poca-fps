@@ -6,6 +6,7 @@ using Unity.MLAgents.Sensors;
 public class FPSAgent : Agent
 {
     public int teamId;
+    public GameManager gameManager;
 
     private PlayerController playerController;
     private CharacterController controller;
@@ -15,7 +16,7 @@ public class FPSAgent : Agent
     public override void Initialize()
     {
         playerController = GetComponent<PlayerController>();
-        playerController.Initialize(teamId);
+        playerController.Initialize(gameManager, teamId);
         controller = GetComponent<CharacterController>();
         lastMousePosition = Input.mousePosition;
     }
@@ -76,11 +77,11 @@ public class FPSAgent : Agent
             discreteActionsOut[1] = 2;
         }
 
-        // 跳跃
-        discreteActionsOut[2] = Input.GetButton("Jump") ? 1 : 0;
-        
         // 射击
-        discreteActionsOut[3] = Input.GetButton("Fire1") ? 1 : 0;
+        discreteActionsOut[2] = Input.GetButton("Fire1") ? 1 : 0;
+
+        // 跳跃
+        // discreteActionsOut[3] = Input.GetButton("Jump") ? 1 : 0;
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -93,17 +94,17 @@ public class FPSAgent : Agent
         float vertical = actions.DiscreteActions[1] == 1? 1 : actions.DiscreteActions[1] == 2? -1 : 0;
         playerController.MoveXoZ(horizontal, vertical);
 
-        int jumpAction = actions.DiscreteActions[2];
-        if (jumpAction == 1)
-        {
-            playerController.Jump();
-        }
-
-        int shootAction = actions.DiscreteActions[3];
+        int shootAction = actions.DiscreteActions[2];
         if (shootAction == 1)
         {
             playerController.Shoot();
         }
+
+        // int jumpAction = actions.DiscreteActions[3];
+        // if (jumpAction == 1)
+        // {
+        //     playerController.Jump();
+        // }
 
         // 旋转
         playerController.RotateVision(
@@ -111,16 +112,6 @@ public class FPSAgent : Agent
             actions.ContinuousActions[1]
         );
 
-        // 2. Reward & Punishment
-        AddReward(-0.001f);  // 小惩罚以鼓励效率
-
-        if (playerController.health <= 0)
-        {
-            playerController.IsAlive = false;
-            playerController.gameObject.SetActive(false);
-            controller.enabled = false;
-            SetReward(-1f); // 死亡惩罚
-            EndEpisode();
-        }
+        AddReward(-0.001f);  // 每帧小惩罚以鼓励效率
     }
 }

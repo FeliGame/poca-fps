@@ -1,7 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -20,7 +18,7 @@ public class PlayerController : MonoBehaviour
     private float jumpForce = 20f;
 
     [Header("Weapon")]
-    public float damage = 30f;
+    public float damage = 100f;
     public float fireInterval = 0.1f;
     // 随机弹道
     public float fireRecover = 0.25f;   // 弹道恢复的时间
@@ -37,14 +35,18 @@ public class PlayerController : MonoBehaviour
     private float currentPitch = 0f;    // 当前俯仰角
     private float rayOriginOffset = 0.5f;  // 射线发射点偏移（防止撞到自己）
     private Vector3 lastPosition; // 上一帧Player位置
+    private GameManager gameManager;
+    private FPSAgent agent;
 
 
-    public void Initialize(int teamId)
+    public void Initialize(GameManager gameManager, int teamId)
     {
         this.teamId = teamId;
         controller = GetComponent<CharacterController>();
         // 设置玩家颜色
         SetTeamColor();
+        this.gameManager = gameManager;
+        agent = GetComponent<FPSAgent>();
     }
 
     private void SetTeamColor()
@@ -58,7 +60,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!IsAlive)
             return;
@@ -72,17 +74,17 @@ public class PlayerController : MonoBehaviour
             velocity.y = -4f;
 
         // 应用重力
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        velocity.y += gravity * Time.fixedDeltaTime;
+        controller.Move(velocity * Time.fixedDeltaTime);
 
         isGrounded = controller.isGrounded;
 
         // 射击冷却
         if (fireCooldown > 0)
-            fireCooldown -= Time.deltaTime;
+            fireCooldown -= Time.fixedDeltaTime;
         // 弹道恢复
         if (fireRecoverCooldown > 0)
-            fireRecoverCooldown -= Time.deltaTime;
+            fireRecoverCooldown -= Time.fixedDeltaTime;
 
         lastPosition = transform.position;
     }
@@ -104,7 +106,7 @@ public class PlayerController : MonoBehaviour
         moveDirection.Normalize();
 
         // 移动
-        controller.Move(moveSpeed * Time.deltaTime * moveDirection);
+        controller.Move(moveSpeed * Time.fixedDeltaTime * moveDirection);
     }
 
     public void Jump()
@@ -112,6 +114,7 @@ public class PlayerController : MonoBehaviour
         if (isGrounded && IsAlive)
         {
             velocity.y = Mathf.Sqrt(jumpForce);
+            agent.AddReward(-0.1f);  // 不鼓励跳跃
         }
     }
 
@@ -120,7 +123,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!IsAlive) return;
 
-        float rotationFactor = 180f * mouseSensitivity * Time.deltaTime;
+        float rotationFactor = 180f * mouseSensitivity * Time.deltaTime;  // 旋转视角只和渲染有关
         float horizontalRotation = rotation_h * rotationFactor;
         float verticalRotation = rotation_v * rotationFactor;
         // 水平旋转（身体转向）
@@ -148,17 +151,18 @@ public class PlayerController : MonoBehaviour
         if (isMoving)
         {
             jitterRange = movingJitter;
+            agent.AddReward(-0.1f);
         }
         else
         {
             if (fireRecoverCooldown <= 0)
             {
-                Debug.Log("Precise shot");
                 jitterRange = 0f; // 站定第一次射击准确
             }
             else
             {
                 jitterRange = stationaryJitter; // 站定后续射击抖动
+                agent.AddReward(-0.1f);
             }
         }
 
@@ -185,10 +189,10 @@ public class PlayerController : MonoBehaviour
             }
             else  // 击中非Player对象，生成弹孔
             {
-                GameObject bulletHole = Instantiate(GameManager.Instance.bulletHolePrefab, hit.point, Quaternion.LookRotation(-hit.normal));
-                bulletHole.GetComponent<Renderer>().material.color = Color.black;
-                bulletHole.transform.position -= bulletHole.transform.forward * 0.01f;
-                Destroy(bulletHole, 2f);
+                // GameObject bulletHole = Instantiate(gameManager.bulletHolePrefab, hit.point, Quaternion.LookRotation(-hit.normal));
+                // bulletHole.GetComponent<Renderer>().material.color = Color.black;
+                // bulletHole.transform.position -= bulletHole.transform.forward * 0.01f;
+                // Destroy(bulletHole, 2f);
             }
         }
 
@@ -198,11 +202,18 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(Transform from, float amount)
     {
+        FPSAgent killerAgent = from.GetComponent<FPSAgent>();
+        killerAgent.AddReward(0.5f);  // 击中有奖励
+        agent.AddReward(-0.5f);       // 被击中惩罚
+
         health -= amount;
         if (health <= 0 && IsAlive)
         {
             Debug.Log(from.gameObject.name + " killed " + gameObject.name);
             Die();
+
+            killerAgent.AddReward(1f);
+            agent.AddReward(-1f);
         }
     }
 
@@ -228,10 +239,10 @@ public class PlayerController : MonoBehaviour
 
         // 选择重生点
         Transform spawnCircle = teamId == 1 ?
-            GameManager.Instance.team1SpawnCircle :
-            GameManager.Instance.team2SpawnCircle;
+            gameManager.team1SpawnCircle :
+            gameManager.team2SpawnCircle;
 
-        Vector2 random2D = Random.insideUnitCircle * GameManager.Instance.spawnCircleRadius;
+        Vector2 random2D = Random.insideUnitCircle * gameManager.spawnCircleRadius;
         Vector3 random3D = new(random2D.x, 0f, random2D.y);
         Vector3 spawnPos = spawnCircle.position + random3D;
 

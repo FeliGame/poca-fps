@@ -11,7 +11,11 @@ conda install grpcio==1.48.2  # 仅Apple M系列芯片需要指定该版本，�
 pip install torch==2.1.1 torchvision torchaudio  # 仅Apple M系列芯片需要指定torch版本，否则对MPS支持会出错
 pip install mlagents
 ```
-若想利用Apple M系列的GPU加速，还需修改安装的ML-Agents包的torch.py文件，以添加MPS支持：
+若想利用Apple M系列的GPU加速，还需先找到mlagents包位置（并不是所有模型启用MPS都会得到加速）：
+``` shell
+pip show mlagents
+```
+然后在ML-Agents包的torch_utils目录下找到torch.py文件，按如下修改以添加MPS支持：
 ``` python
 import os
 
