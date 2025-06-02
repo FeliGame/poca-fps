@@ -33,15 +33,6 @@ public class FPSAgent : Agent
         }
     }
 
-    public override void CollectObservations(VectorSensor sensor)
-    {
-        // Visual模式不需要观测VectorSensor
-        // sensor.AddObservation(transform.position); // 位置
-        // sensor.AddObservation(transform.rotation.eulerAngles.y / 360f); // 朝向
-
-        // ML-Agents会自动处理CameraSensor数据
-    }
-
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         // 数组的值必须是自然数
@@ -79,9 +70,6 @@ public class FPSAgent : Agent
 
         // 射击
         discreteActionsOut[2] = Input.GetButton("Fire1") ? 1 : 0;
-
-        // 跳跃
-        // discreteActionsOut[3] = Input.GetButton("Jump") ? 1 : 0;
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -100,18 +88,12 @@ public class FPSAgent : Agent
             playerController.Shoot();
         }
 
-        // int jumpAction = actions.DiscreteActions[3];
-        // if (jumpAction == 1)
-        // {
-        //     playerController.Jump();
-        // }
-
         // 旋转
         playerController.RotateVision(
             actions.ContinuousActions[0],
             actions.ContinuousActions[1]
         );
 
-        AddReward(-0.001f);  // 每帧小惩罚以鼓励效率
+        // AddReward(-0.001f);  // 每帧小惩罚以鼓励效率
     }
 }

@@ -401,8 +401,8 @@ GameObject:
   - component: {fileID: 560259182750490267}
   - component: {fileID: 8851913973017044046}
   - component: {fileID: 6020002165543849599}
-  - component: {fileID: 4085917316178888298}
   - component: {fileID: 3294199748340239304}
+  - component: {fileID: -6902730511990754301}
   m_Layer: 0
   m_Name: PlayerAgent
   m_TagString: Player
@@ -472,7 +472,7 @@ MonoBehaviour:
   mouseSensitivity: 0.02
   gravity: -9.81
   head: {fileID: 4523953535488826847}
-  damage: 30
+  damage: 50
   fireInterval: 0.1
   fireRecover: 0.25
   stationaryJitter: 2
@@ -499,7 +499,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: ee6515ddcc2764455a280590ec6d12d2, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: f81eaed6bbf0742ddbe2b5a12571388e, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: FPSBehavior
@@ -541,27 +541,6 @@ MonoBehaviour:
   DecisionPeriod: 5
   DecisionStep: 0
   TakeActionsBetweenDecisions: 1
---- !u!114 &4085917316178888298
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8782214709698625352}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 282f342c2ab144bf38be65d4d0c4e07d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Camera: {fileID: 1620255372128811918}
-  m_SensorName: CameraSensor
-  m_Width: 80
-  m_Height: 60
-  m_Grayscale: 1
-  m_ObservationType: 0
-  m_RuntimeCameraEnable: 0
-  m_ObservationStacks: 4
-  m_Compression: 1
 --- !u!143 &3294199748340239304
 CharacterController:
   m_ObjectHideFlags: 0
@@ -588,6 +567,37 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.25, z: 0}
+--- !u!114 &-6902730511990754301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8782214709698625352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb6b867a41448888c1cd4f99643ad71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SensorName: RayPerceptionSensor
+  m_DetectableTags:
+  - wall
+  - redAgent
+  - blueAgent
+  m_RaysPerDirection: 5
+  m_MaxRayDegrees: 60
+  m_SphereCastRadius: 0.5
+  m_RayLength: 100
+  m_RayLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  m_ObservationStacks: 3
+  m_AlternatingRayOrder: 1
+  m_UseBatchedRaycasts: 1
+  rayHitColor: {r: 1, g: 0, b: 0, a: 1}
+  rayMissColor: {r: 1, g: 1, b: 1, a: 1}
+  m_StartVerticalOffset: 0.5
+  m_EndVerticalOffset: 0.5
 --- !u!1 &8862235287506457656
 GameObject:
   m_ObjectHideFlags: 0
@@ -627,7 +637,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8862235287506457656}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}

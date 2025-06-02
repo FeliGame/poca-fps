@@ -15,10 +15,8 @@ public class PlayerController : MonoBehaviour
     public float gravity = -9.81f;
     public Transform head;
 
-    private float jumpForce = 20f;
-
     [Header("Weapon")]
-    public float damage = 100f;
+    public float damage = 50f;
     public float fireInterval = 0.1f;
     // 随机弹道
     public float fireRecover = 0.25f;   // 弹道恢复的时间
@@ -109,15 +107,6 @@ public class PlayerController : MonoBehaviour
         controller.Move(moveSpeed * Time.fixedDeltaTime * moveDirection);
     }
 
-    public void Jump()
-    {
-        if (isGrounded && IsAlive)
-        {
-            velocity.y = Mathf.Sqrt(jumpForce);
-            agent.AddReward(-0.1f);  // 不鼓励跳跃
-        }
-    }
-
     // 旋转视角，输入值为视角变化量
     public void RotateVision(float rotation_h, float rotation_v)
     {
@@ -151,7 +140,7 @@ public class PlayerController : MonoBehaviour
         if (isMoving)
         {
             jitterRange = movingJitter;
-            agent.AddReward(-0.1f);
+            // agent.AddReward(-0.01f);
         }
         else
         {
@@ -162,7 +151,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 jitterRange = stationaryJitter; // 站定后续射击抖动
-                agent.AddReward(-0.1f);
+                // agent.AddReward(-0.01f);
             }
         }
 
@@ -203,17 +192,17 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(Transform from, float amount)
     {
         FPSAgent killerAgent = from.GetComponent<FPSAgent>();
-        killerAgent.AddReward(0.5f);  // 击中有奖励
-        agent.AddReward(-0.5f);       // 被击中惩罚
+        // 个人A
+        killerAgent.AddReward(0.5f);
 
         health -= amount;
         if (health <= 0 && IsAlive)
         {
             Debug.Log(from.gameObject.name + " killed " + gameObject.name);
-            Die();
-
+            // 个人KD，不要怕死
             killerAgent.AddReward(1f);
-            agent.AddReward(-1f);
+            // agent.AddReward(-1f);
+            Die();
         }
     }
 
@@ -223,16 +212,16 @@ public class PlayerController : MonoBehaviour
 
         // 禁用控制器
         controller.enabled = false;
-        gameObject.SetActive(false);
 
-        // 重生逻辑
-        // StartCoroutine(RespawnAfterDelay(3f));
+        // 延迟重生
+        gameObject.SetActive(false);
+        // Invoke(nameof(Respawn), 1f);
     }
 
-    private IEnumerator RespawnAfterDelay(float delay)
+    public void Respawn()
     {
-        yield return new WaitForSeconds(delay);
-
+        // 先禁用，随后的更新位置才会生效
+        gameObject.SetActive(false);
         // 重置属性
         health = 100f;
         IsAlive = true;
@@ -242,12 +231,8 @@ public class PlayerController : MonoBehaviour
             gameManager.team1SpawnCircle :
             gameManager.team2SpawnCircle;
 
-        Vector2 random2D = Random.insideUnitCircle * gameManager.spawnCircleRadius;
-        Vector3 random3D = new(random2D.x, 0f, random2D.y);
-        Vector3 spawnPos = spawnCircle.position + random3D;
-
         // 重置位置和状态
-        transform.SetPositionAndRotation(spawnPos, spawnCircle.rotation);
+        transform.SetPositionAndRotation(gameManager.GetRandomSpawnPosition(spawnCircle), spawnCircle.rotation);
         controller.enabled = true;
         gameObject.SetActive(true);
     }

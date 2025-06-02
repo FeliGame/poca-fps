@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
 {
     [Header("Game Settings")]
     public int teamSize = 5;
-    public float matchTime = 3 * 60; // 单位：秒
+    public float matchTime = 60; // 单位：秒
     public Transform team1SpawnCircle;
     public Transform team2SpawnCircle;
     public float spawnCircleRadius = 5f;
@@ -23,10 +23,8 @@ public class GameManager : MonoBehaviour
     private float currentTime;
     private bool isGameActive = false;
 
-    private SimpleMultiAgentGroup m_Team1Group;
-    private SimpleMultiAgentGroup m_Team2Group;
-
-    private int m_ResetTimer;
+    public SimpleMultiAgentGroup m_Team1Group;
+    public SimpleMultiAgentGroup m_Team2Group;
 
 
     private void Start()
@@ -36,7 +34,6 @@ public class GameManager : MonoBehaviour
         m_Team2Group = new SimpleMultiAgentGroup();
 
         InitializeGame();
-        m_ResetTimer = 0;
     }
 
     private void FixedUpdate()
@@ -44,22 +41,31 @@ public class GameManager : MonoBehaviour
         if (isGameActive)
         {
             currentTime -= Time.fixedDeltaTime;
-            m_ResetTimer += 1;
             if (currentTime <= 0)
             {
-                EndGame();
+                Debug.Log("Timeout, interrupted!");
+                m_Team1Group.GroupEpisodeInterrupted();
+                m_Team2Group.GroupEpisodeInterrupted();
                 RestartGame();
             }
 
             // 检查游戏是否结束（一方全灭）
             if (CheckTeamEliminated(team1Players))
             {
-                TeamWin(2);
+                Debug.Log("Team2 Win!");
+                m_Team1Group.AddGroupReward(-1f);
+                m_Team2Group.AddGroupReward(currentTime / matchTime);
+                m_Team1Group.EndGroupEpisode();
+                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
             else if (CheckTeamEliminated(team2Players))
             {
-                TeamWin(1);
+                Debug.Log("Team1 Win!");
+                m_Team1Group.AddGroupReward(currentTime / matchTime);
+                m_Team2Group.AddGroupReward(-1f);
+                m_Team1Group.EndGroupEpisode();
+                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
         }
@@ -70,9 +76,10 @@ public class GameManager : MonoBehaviour
         // 创建团队 1
         for (int i = 0; i < teamSize; i++)
         {
-            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team1SpawnCircle), Quaternion.identity, transform);
+            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team1SpawnCircle), team1SpawnCircle.rotation, transform);
             playerObj.name = "Team1_P" + (i + 1);
             playerObj.GetComponent<BehaviorParameters>().TeamId = 0;
+            playerObj.tag = "blueAgent";
             FPSAgent agent = playerObj.GetComponent<FPSAgent>();
             agent.gameManager = this;
             agent.teamId = 1;
@@ -84,9 +91,10 @@ public class GameManager : MonoBehaviour
         // 创建团队 2
         for (int i = 0; i < teamSize; i++)
         {
-            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team2SpawnCircle), Quaternion.identity, transform);
+            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team2SpawnCircle), team2SpawnCircle.rotation, transform);
             playerObj.name = "Team2_P" + (i + 1);
             playerObj.GetComponent<BehaviorParameters>().TeamId = 1;
+            playerObj.tag = "redAgent";
             FPSAgent agent = playerObj.GetComponent<FPSAgent>();
             agent.gameManager = this;
             agent.teamId = 2;
@@ -99,13 +107,6 @@ public class GameManager : MonoBehaviour
         isGameActive = true;
     }
 
-    private Vector3 GetRandomSpawnPosition(Transform spawnCircle)
-    {
-        Vector2 random2D = Random.insideUnitCircle * spawnCircleRadius;
-        Vector3 random3D = new(random2D.x, 0f, random2D.y);
-        return spawnCircle.position + random3D;
-    }
-
     private bool CheckTeamEliminated(List<PlayerController> team)
     {
         foreach (var player in team)
@@ -116,61 +117,26 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    private void TeamWin(int winningTeamId)
+    public Vector3 GetRandomSpawnPosition(Transform spawnCircle)
     {
-        Debug.Log("Team " + winningTeamId + " Wins!");
-        if (winningTeamId == 1)
-        {
-            m_Team1Group.AddGroupReward(1 - (float)m_ResetTimer / (int)(matchTime / Time.fixedDeltaTime));
-            m_Team2Group.AddGroupReward(-1);
-        }
-        else
-        {
-            m_Team2Group.AddGroupReward(1 - (float)m_ResetTimer / (int)(matchTime / Time.fixedDeltaTime));
-            m_Team1Group.AddGroupReward(-1);
-        }
+        Vector2 random2D = Random.insideUnitCircle * spawnCircleRadius;
+        Vector3 random3D = new(random2D.x, 0f, random2D.y);
+        return spawnCircle.position + random3D;
     }
 
-    private void EndGame()
+    public void RestartGame()
     {
-        isGameActive = false;
+        Debug.Log("Restart new game...");
+        isGameActive = true;
+        currentTime = matchTime;
 
-        // 根据剩余玩家数量判断胜负
-        int team1AliveCount = GetAlivePlayerCount(team1Players);
-        int team2AliveCount = GetAlivePlayerCount(team2Players);
-
-        if (team1AliveCount > team2AliveCount)
+        foreach (var player in team1Players)
         {
-            TeamWin(1);
+            player.Respawn();
         }
-        else if (team2AliveCount > team1AliveCount)
+        foreach (var player in team2Players)
         {
-            TeamWin(2);
+            player.Respawn();
         }
-        else
-        {
-            Debug.Log("It's a tie!");
-        }
-
-        m_Team1Group.EndGroupEpisode();
-        m_Team2Group.EndGroupEpisode();
-    }
-
-    private int GetAlivePlayerCount(List<PlayerController> team)
-    {
-        int aliveCount = 0;
-        foreach (var player in team)
-        {
-            if (player.IsAlive)
-            {
-                aliveCount++;
-            }
-        }
-        return aliveCount;
-    }
-
-    private void RestartGame()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
