@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     [Header("Game Settings")]
     public int teamSize = 5;
     public float matchTime = 60; // 单位：秒
+    public float currentTime;
     public Transform team1SpawnCircle;
     public Transform team2SpawnCircle;
     public float spawnCircleRadius = 5f;
@@ -18,9 +19,8 @@ public class GameManager : MonoBehaviour
     public GameObject playerPrefab;
     public GameObject bulletHolePrefab;
 
-    private List<PlayerController> team1Players = new();
-    private List<PlayerController> team2Players = new();
-    private float currentTime;
+    public List<PlayerController> team1Players = new();
+    public List<PlayerController> team2Players = new();
     private bool isGameActive = false;
 
     public SimpleMultiAgentGroup m_Team1Group;
@@ -43,9 +43,9 @@ public class GameManager : MonoBehaviour
             currentTime -= Time.fixedDeltaTime;
             if (currentTime <= 0)
             {
-                Debug.Log("Timeout, interrupted!");
-                m_Team1Group.GroupEpisodeInterrupted();
-                m_Team2Group.GroupEpisodeInterrupted();
+                Debug.Log("Timeout");
+                m_Team1Group.EndGroupEpisode();
+                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
 
@@ -53,8 +53,6 @@ public class GameManager : MonoBehaviour
             if (CheckTeamEliminated(team1Players))
             {
                 Debug.Log("Team2 Win!");
-                m_Team1Group.AddGroupReward(-1f);
-                m_Team2Group.AddGroupReward(currentTime / matchTime);
                 m_Team1Group.EndGroupEpisode();
                 m_Team2Group.EndGroupEpisode();
                 RestartGame();
@@ -62,8 +60,6 @@ public class GameManager : MonoBehaviour
             else if (CheckTeamEliminated(team2Players))
             {
                 Debug.Log("Team1 Win!");
-                m_Team1Group.AddGroupReward(currentTime / matchTime);
-                m_Team2Group.AddGroupReward(-1f);
                 m_Team1Group.EndGroupEpisode();
                 m_Team2Group.EndGroupEpisode();
                 RestartGame();
@@ -74,7 +70,8 @@ public class GameManager : MonoBehaviour
     private void InitializeGame()
     {
         // 创建团队 1
-        for (int i = 0; i < teamSize; i++)
+        int i = team1Players.Count;
+        for (; i < teamSize; i++)
         {
             GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team1SpawnCircle), team1SpawnCircle.rotation, transform);
             playerObj.name = "Team1_P" + (i + 1);
@@ -89,7 +86,8 @@ public class GameManager : MonoBehaviour
         }
 
         // 创建团队 2
-        for (int i = 0; i < teamSize; i++)
+        i = team2Players.Count;
+        for (; i < teamSize; i++)
         {
             GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team2SpawnCircle), team2SpawnCircle.rotation, transform);
             playerObj.name = "Team2_P" + (i + 1);

@@ -1,5 +1,5 @@
 # POCA FPS
-基于Unity ML-Agents以及POCA强化学习算法的第一人称射击游戏。
+基于Unity ML-Agents的GAIL模仿学习+POCA强化学习算法的第一人称射击游戏。
 
 ## 训练环境配置
 如果用户想在该项目基础上训练自己的强化学习模型，则依据本节操作（只是游玩可跳过本节）。依次在终端执行下列命令安装相关依赖。
@@ -137,7 +137,3 @@ netron /path/to/FPSBehavior.onnx
 * 使用项目自带的模型：直接点击Play按钮即可。
 
 * 使用自行训练的模型：将results/[run-id]目录下的onnx模型文件拖拽到项目中智能体的Behavior Parameters组件的Model值中，再点击Play按钮即可在该模型下执行推理。
-
-## 模型介绍
-* 531FPSBehavior: （877万步，约8h）3分钟团队对战，相机传感器，不重生。
-* 62FPSBehavior: 2v2团队对战，射线传感器，不重生。

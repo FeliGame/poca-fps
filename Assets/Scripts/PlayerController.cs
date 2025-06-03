@@ -199,9 +199,22 @@ public class PlayerController : MonoBehaviour
         if (health <= 0 && IsAlive)
         {
             Debug.Log(from.gameObject.name + " killed " + gameObject.name);
-            // 个人KD，不要怕死
+            // 个人K，不怕死
             killerAgent.AddReward(1f);
             // agent.AddReward(-1f);
+            // 团队K
+            var manager = killerAgent.gameManager;
+            var score = manager.currentTime / manager.matchTime;  // 击杀效率
+            if (killerAgent.teamId == 1)
+            {
+                manager.m_Team1Group.AddGroupReward(score);
+                manager.m_Team2Group.AddGroupReward(-1f);
+            }
+            else
+            {
+                manager.m_Team1Group.AddGroupReward(-1f);
+                manager.m_Team2Group.AddGroupReward(score);
+            }
             Die();
         }
     }
