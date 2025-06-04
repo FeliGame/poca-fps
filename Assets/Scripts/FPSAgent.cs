@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using Unity.MLAgents.Policies;
 
 public class FPSAgent : Agent
 {
@@ -67,9 +68,6 @@ public class FPSAgent : Agent
         {
             discreteActionsOut[1] = 2;
         }
-
-        // 射击
-        discreteActionsOut[2] = Input.GetButton("Fire1") ? 1 : 0;
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -82,12 +80,11 @@ public class FPSAgent : Agent
         float vertical = actions.DiscreteActions[1] == 1? 1 : actions.DiscreteActions[1] == 2? -1 : 0;
         playerController.MoveXoZ(horizontal, vertical);
 
-        int shootAction = actions.DiscreteActions[2];
-        if (shootAction == 1)
+        // 手动操作才需要按射击键
+        if (GetComponent<BehaviorParameters>().BehaviorType == BehaviorType.HeuristicOnly && Input.GetButton("Fire1"))
         {
             playerController.Shoot();
         }
-
         // 旋转
         playerController.RotateVision(
             actions.ContinuousActions[0],

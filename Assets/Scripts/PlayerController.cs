@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Unity.MLAgents.Policies;
 
 public class PlayerController : MonoBehaviour
 {
@@ -64,8 +65,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         // 绘制瞄准线
-        float rayDuration = 0f;
-        Debug.DrawRay(rayOrigin, rayDirection, Color.green, rayDuration);
+        Debug.DrawRay(rayOrigin, rayDirection, Color.green, 0f);
 
         // 速度负值固定
         if (!controller.isGrounded && velocity.y < 0)
@@ -83,6 +83,10 @@ public class PlayerController : MonoBehaviour
         // 弹道恢复
         if (fireRecoverCooldown > 0)
             fireRecoverCooldown -= Time.fixedDeltaTime;
+
+        // AI自动射击
+        if (GetComponent<BehaviorParameters>().BehaviorType != BehaviorType.HeuristicOnly)
+            Shoot();
 
         lastPosition = transform.position;
     }
@@ -155,25 +159,15 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 随机抖动视角
-        if (jitterRange > 0)
-        {
-            float jitterX = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
-            float jitterY = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
-            RotateVision(jitterX, jitterY);
-        }
-
         // 仅获取最近击中物体
         if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, range))
         {
-            // Debug.Log("Hitting " + hit.transform.name);
-            // 绘制枪线
-            Debug.DrawRay(rayOrigin, rayDirection * hit.distance, teamId == 1 ? Color.blue : Color.red, 0.5f);
-
             // 检查是否击中敌方队伍的Player
             PlayerController target = hit.transform.GetComponent<PlayerController>();
             if (target != null && target.teamId != teamId)
             {
+                // 命中线
+                Debug.DrawRay(rayOrigin, rayDirection * hit.distance, Color.black, 0.5f);
                 target.TakeDamage(transform, damage);
             }
             else  // 击中非Player对象，生成弹孔
@@ -183,6 +177,14 @@ public class PlayerController : MonoBehaviour
                 // bulletHole.transform.position -= bulletHole.transform.forward * 0.01f;
                 // Destroy(bulletHole, 2f);
             }
+        }
+
+        // 随机抖动视角
+        if (jitterRange > 0)
+        {
+            float jitterX = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
+            float jitterY = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
+            RotateVision(jitterX, jitterY);
         }
 
         fireCooldown = fireInterval;

@@ -426,7 +426,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7775511065064492992}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -577,12 +577,12 @@ MonoBehaviour:
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 2
-      BranchSizes: 030000000300000002000000
+      BranchSizes: 0300000003000000
     VectorActionSize: 
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 4088a116928ea439b8514de36534609a, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: ec26d12b022594280a1b9879311bf776, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: FPSBehavior
