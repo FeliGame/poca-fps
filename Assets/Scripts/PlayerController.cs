@@ -115,7 +115,8 @@ public class PlayerController : MonoBehaviour
     public void RotateVision(float rotation_h, float rotation_v)
     {
         if (!IsAlive) return;
-
+        // 鼓励水平视角变化，惩罚垂直视角变化
+        agent.AddReward(0.01f * (Mathf.Abs(rotation_h) - Mathf.Abs(rotation_v)));
         float rotationFactor = 180f * mouseSensitivity * Time.deltaTime;  // 旋转视角只和渲染有关
         float horizontalRotation = rotation_h * rotationFactor;
         float verticalRotation = rotation_v * rotationFactor;
@@ -172,6 +173,7 @@ public class PlayerController : MonoBehaviour
             }
             else  // 击中非Player对象，生成弹孔
             {
+                agent.AddReward(-0.001f);  // 没瞄到扣分
                 // GameObject bulletHole = Instantiate(gameManager.bulletHolePrefab, hit.point, Quaternion.LookRotation(-hit.normal));
                 // bulletHole.GetComponent<Renderer>().material.color = Color.black;
                 // bulletHole.transform.position -= bulletHole.transform.forward * 0.01f;

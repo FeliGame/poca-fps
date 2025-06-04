@@ -90,7 +90,5 @@ public class FPSAgent : Agent
             actions.ContinuousActions[0],
             actions.ContinuousActions[1]
         );
-
-        // AddReward(-0.001f);  // 每帧小惩罚以鼓励效率
     }
 }
