@@ -9,6 +9,7 @@ public class FPSAgent : Agent
     public int teamId;
     public GameManager gameManager;
 
+    private Transform head;
     private PlayerController playerController;
     private CharacterController controller;
     private Vector2 lastMousePosition;  // 上一帧鼠标位置
@@ -16,6 +17,7 @@ public class FPSAgent : Agent
 
     public override void Initialize()
     {
+        head = transform.Find("head");
         playerController = GetComponent<PlayerController>();
         playerController.Initialize(gameManager, teamId);
         controller = GetComponent<CharacterController>();
@@ -32,6 +34,32 @@ public class FPSAgent : Agent
             playerController.gameObject.SetActive(true);
             controller.enabled = true;
         }
+    }
+
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        // 查找离瞄准线（head的x正轴）夹角最小的敌人
+        var rayDirection = head.forward;
+        var enemies = teamId == 1 ?
+            gameManager.team2Players :
+            gameManager.team1Players;
+        float minAngle = Mathf.Infinity;
+        Vector3 enemyDirection = new();
+        PlayerController nearestCrosshairEnemy = null;
+        foreach (var enemy in enemies)
+        {
+            if (!enemy.IsAlive) continue;
+            // 计算离准星最近的敌人和瞄准线方向夹角
+            enemyDirection = enemy.transform.position - head.position;
+            float angle = Vector3.Angle(rayDirection, enemyDirection);
+            if (angle < minAngle)
+            {
+                minAngle = angle;
+                nearestCrosshairEnemy = enemy;
+            }
+        }
+        // 学习朝向关系
+        sensor.AddObservation(enemyDirection);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -51,7 +79,7 @@ public class FPSAgent : Agent
         // 移动
         var input_h = Input.GetAxis("Horizontal");
         var input_v = Input.GetAxis("Vertical");
-        
+
         if (input_h > 0)
         {
             discreteActionsOut[0] = 1;
