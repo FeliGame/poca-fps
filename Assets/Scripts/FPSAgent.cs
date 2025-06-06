@@ -13,6 +13,7 @@ public class FPSAgent : Agent
     private PlayerController playerController;
     private CharacterController controller;
     private Vector2 lastMousePosition;  // 上一帧鼠标位置
+    private Transform nearestCrosshairEnemy = null;  // 离准心最近的敌人
     
 
     public override void Initialize()
@@ -45,7 +46,6 @@ public class FPSAgent : Agent
             gameManager.team1Players;
         float minAngle = Mathf.Infinity;
         Vector3 enemyDirection = new();
-        PlayerController nearestCrosshairEnemy = null;
         foreach (var enemy in enemies)
         {
             if (!enemy.IsAlive) continue;
@@ -55,7 +55,7 @@ public class FPSAgent : Agent
             if (angle < minAngle)
             {
                 minAngle = angle;
-                nearestCrosshairEnemy = enemy;
+                nearestCrosshairEnemy = enemy.transform;
             }
         }
         // 学习朝向关系
@@ -118,5 +118,8 @@ public class FPSAgent : Agent
             actions.ContinuousActions[0],
             actions.ContinuousActions[1]
         );
+
+        // 准星尝试锁定离准心夹角最近的敌人
+        playerController.TryLockOn(nearestCrosshairEnemy);
     }
 }

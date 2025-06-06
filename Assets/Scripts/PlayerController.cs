@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using Unity.MLAgents.Policies;
+using Unity.MLAgents.Sensors;
 
 public class PlayerController : MonoBehaviour
 {
@@ -133,6 +134,42 @@ public class PlayerController : MonoBehaviour
         rayOrigin = head.position + rayDirection * rayOriginOffset;
     }
 
+    // 如果敌人在视野范围内，准心【直接】锁定敌人
+    public void TryLockOn(Transform enemy)
+    {
+        if (!IsAlive || enemy == null) return;
+        // 从当前Transform投射ray到enemy，如果ray能直接命中enemy，则先沿y轴转动整个transform（水平转身），然后沿x轴转动head（上下抬头），直到ray能直接命中enemy
+        Vector3 enemyDir = enemy.position - head.position;
+        // 如果敌人和头部方向夹角，在RayPerceptionSensor的MaxRayDegrees外，则不锁定
+        float angle = Vector3.Angle(head.forward, enemyDir);
+        if (angle > GetComponent<RayPerceptionSensorComponent3D>().MaxRayDegrees)
+            return;
+        if (Physics.Raycast(head.position, enemyDir, out RaycastHit hit, range))
+        {
+            if (hit.transform == enemy)
+            {
+                // 水平旋转身体（身体转向）
+                Vector3 horizontalDir = enemyDir;
+                horizontalDir.y = 0f;
+                if (horizontalDir.magnitude > 0)
+                {
+                    horizontalDir.Normalize();
+                    Quaternion horizontalRotation = Quaternion.LookRotation(horizontalDir, Vector3.up);
+                    transform.rotation = horizontalRotation;
+                }
+
+                // 垂直旋转头部（只动头）
+                float pitch = Vector3.SignedAngle(head.parent.forward, enemyDir, head.right);
+                pitch = Mathf.Clamp(pitch, -90f, 90f);
+                head.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+
+                // 更新瞄准线方向和发射点
+                rayDirection = head.forward;
+                rayOrigin = head.position + rayDirection * rayOriginOffset;
+            }
+        }
+    }
+
     public void Shoot()
     {
         if (fireCooldown > 0 || !IsAlive) return;
@@ -166,8 +203,11 @@ public class PlayerController : MonoBehaviour
             if (target != null && target.teamId != teamId)
             {
                 // 命中线
-                Debug.DrawRay(rayOrigin, rayDirection * hit.distance, Color.black, 0.5f);
+                Debug.DrawRay(rayOrigin, rayDirection * hit.distance, teamId == 1 ? Color.blue : Color.red, 0.5f);
                 target.TakeDamage(transform, damage);
+                // AI仅命中时后坐力（此处假设瞄准到就会开枪，这导致AI的第一发子弹一定准确）
+                if (GetComponent<BehaviorParameters>().BehaviorType != BehaviorType.HeuristicOnly)
+                    HandleJitter(jitterRange);
             }
             else  // 击中非Player对象，生成弹孔
             {
@@ -176,9 +216,15 @@ public class PlayerController : MonoBehaviour
                 // bulletHole.transform.position -= bulletHole.transform.forward * 0.01f;
                 // Destroy(bulletHole, 2f);
             }
+            // 人只要开枪就有后坐力
+            if (GetComponent<BehaviorParameters>().BehaviorType == BehaviorType.HeuristicOnly)
+                HandleJitter(jitterRange);
         }
+    }
 
-        // 随机抖动视角
+    private void HandleJitter(float jitterRange)
+    {
+        // 击中后后坐力：随机抖动视角
         if (jitterRange > 0)
         {
             float jitterX = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
@@ -246,7 +292,9 @@ public class PlayerController : MonoBehaviour
             gameManager.team2SpawnCircle;
 
         // 重置位置和状态
-        transform.SetPositionAndRotation(gameManager.GetRandomSpawnPosition(spawnCircle), spawnCircle.rotation);
+        transform.SetPositionAndRotation(
+            gameManager.GetRandomSpawnPosition(spawnCircle),
+            gameManager.GetRandomSpawnYRotation());
         controller.enabled = true;
         gameObject.SetActive(true);
     }

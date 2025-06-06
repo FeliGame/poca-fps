@@ -44,24 +44,17 @@ public class GameManager : MonoBehaviour
             if (currentTime <= 0)
             {
                 Debug.Log("Timeout");
-                m_Team1Group.EndGroupEpisode();
-                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
-
             // 检查游戏是否结束（一方全灭）
             if (CheckTeamEliminated(team1Players))
             {
                 Debug.Log("Team2 Win!");
-                m_Team1Group.EndGroupEpisode();
-                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
             else if (CheckTeamEliminated(team2Players))
             {
                 Debug.Log("Team1 Win!");
-                m_Team1Group.EndGroupEpisode();
-                m_Team2Group.EndGroupEpisode();
                 RestartGame();
             }
         }
@@ -73,7 +66,7 @@ public class GameManager : MonoBehaviour
         int i = team1Players.Count;
         for (; i < teamSize; i++)
         {
-            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team1SpawnCircle), team1SpawnCircle.rotation, transform);
+            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team1SpawnCircle), GetRandomSpawnYRotation(), transform);
             playerObj.name = "Team1_P" + (i + 1);
             playerObj.GetComponent<BehaviorParameters>().TeamId = 0;
             playerObj.tag = "blueAgent";
@@ -89,7 +82,7 @@ public class GameManager : MonoBehaviour
         i = team2Players.Count;
         for (; i < teamSize; i++)
         {
-            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team2SpawnCircle), team2SpawnCircle.rotation, transform);
+            GameObject playerObj = Instantiate(playerPrefab, GetRandomSpawnPosition(team2SpawnCircle), GetRandomSpawnYRotation(), transform);
             playerObj.name = "Team2_P" + (i + 1);
             playerObj.GetComponent<BehaviorParameters>().TeamId = 1;
             playerObj.tag = "redAgent";
@@ -122,9 +115,17 @@ public class GameManager : MonoBehaviour
         return spawnCircle.position + random3D;
     }
 
+    public Quaternion GetRandomSpawnYRotation()
+    {
+        return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+    }
+
     public void RestartGame()
     {
         Debug.Log("Restart new game...");
+        m_Team1Group.EndGroupEpisode();
+        m_Team2Group.EndGroupEpisode();
+
         isGameActive = true;
         currentTime = matchTime;
 
