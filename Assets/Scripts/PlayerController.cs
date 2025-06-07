@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     [Header("Control")]
     public float moveSpeed = 5f;
     public float mouseSensitivity = 0.02f;
+    private float mouseRotationFactor;
     public float gravity = -9.81f;
     public Transform head;
 
@@ -47,6 +48,7 @@ public class PlayerController : MonoBehaviour
         SetTeamColor();
         this.gameManager = gameManager;
         agent = GetComponent<FPSAgent>();
+        mouseRotationFactor = 180f * mouseSensitivity;
     }
 
     private void SetTeamColor()
@@ -112,13 +114,12 @@ public class PlayerController : MonoBehaviour
         controller.Move(moveSpeed * Time.fixedDeltaTime * moveDirection);
     }
 
-    // 旋转视角，输入值为视角变化量
-    public void RotateVision(float rotation_h, float rotation_v)
+    // 旋转视角，输入值为鼠标位移（isMouse=true），否则为视角变化量
+    public void RotateVision(float rotation_h, float rotation_v, bool isMouseInput)
     {
         if (!IsAlive) return;
-        float rotationFactor = 180f * mouseSensitivity * Time.deltaTime;  // 旋转视角只和渲染有关
-        float horizontalRotation = rotation_h * rotationFactor;
-        float verticalRotation = rotation_v * rotationFactor;
+        float horizontalRotation = rotation_h * Time.fixedDeltaTime * (isMouseInput ? mouseRotationFactor:1);
+        float verticalRotation = rotation_v * Time.fixedDeltaTime * (isMouseInput ? mouseRotationFactor:1);
         // 水平旋转（身体转向）
         transform.Rotate(Vector3.up, horizontalRotation);
 
@@ -227,9 +228,9 @@ public class PlayerController : MonoBehaviour
         // 击中后后坐力：随机抖动视角
         if (jitterRange > 0)
         {
-            float jitterX = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
-            float jitterY = Random.Range(-jitterRange, jitterRange) / mouseSensitivity;
-            RotateVision(jitterX, jitterY);
+            float jitterX = Random.Range(-jitterRange, jitterRange);
+            float jitterY = Random.Range(-jitterRange, jitterRange);
+            RotateVision(jitterX, jitterY, false);
         }
 
         fireCooldown = fireInterval;

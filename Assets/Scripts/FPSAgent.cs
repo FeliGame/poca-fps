@@ -40,26 +40,26 @@ public class FPSAgent : Agent
     public override void CollectObservations(VectorSensor sensor)
     {
         // 查找离瞄准线（head的x正轴）夹角最小的敌人
-        var rayDirection = head.forward;
-        var enemies = teamId == 1 ?
-            gameManager.team2Players :
-            gameManager.team1Players;
-        float minAngle = Mathf.Infinity;
-        Vector3 enemyDirection = new();
-        foreach (var enemy in enemies)
-        {
-            if (!enemy.IsAlive) continue;
-            // 计算离准星最近的敌人和瞄准线方向夹角
-            enemyDirection = enemy.transform.position - head.position;
-            float angle = Vector3.Angle(rayDirection, enemyDirection);
-            if (angle < minAngle)
-            {
-                minAngle = angle;
-                nearestCrosshairEnemy = enemy.transform;
-            }
-        }
-        // 学习朝向关系
-        sensor.AddObservation(enemyDirection);
+        // var rayDirection = head.forward;
+        // var enemies = teamId == 1 ?
+        //     gameManager.team2Players :
+        //     gameManager.team1Players;
+        // float minAngle = Mathf.Infinity;
+        // Vector3 enemyDirection = new();
+        // foreach (var enemy in enemies)
+        // {
+        //     if (!enemy.IsAlive) continue;
+        //     // 计算离准星最近的敌人和瞄准线方向夹角
+        //     enemyDirection = enemy.transform.position - head.position;
+        //     float angle = Vector3.Angle(rayDirection, enemyDirection);
+        //     if (angle < minAngle)
+        //     {
+        //         minAngle = angle;
+        //         nearestCrosshairEnemy = enemy.transform;
+        //     }
+        // }
+        // // 学习朝向关系
+        // sensor.AddObservation(enemyDirection);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -73,8 +73,9 @@ public class FPSAgent : Agent
         lastMousePosition = currentMousePosition;
 
         // 旋转视角
-        continuousActionsOut[0] = mouseDelta.x;
-        continuousActionsOut[1] = mouseDelta.y;
+        // continuousActionsOut[0] = mouseDelta.x;
+        // continuousActionsOut[1] = mouseDelta.y;
+        playerController.RotateVision(mouseDelta.x, mouseDelta.y, true);
 
         // 移动
         var input_h = Input.GetAxis("Horizontal");
@@ -104,8 +105,8 @@ public class FPSAgent : Agent
             return;
 
         // 1. Action -> Behavior
-        float horizontal = actions.DiscreteActions[0] == 1? 1 : actions.DiscreteActions[0] == 2? -1 : 0;
-        float vertical = actions.DiscreteActions[1] == 1? 1 : actions.DiscreteActions[1] == 2? -1 : 0;
+        float horizontal = actions.DiscreteActions[0] == 1 ? 1 : actions.DiscreteActions[0] == 2 ? -1 : 0;
+        float vertical = actions.DiscreteActions[1] == 1 ? 1 : actions.DiscreteActions[1] == 2 ? -1 : 0;
         playerController.MoveXoZ(horizontal, vertical);
 
         // 手动操作才需要按射击键
@@ -114,12 +115,14 @@ public class FPSAgent : Agent
             playerController.Shoot();
         }
         // 旋转
+        // 方案：鼠标移动量作为连续值输入
         playerController.RotateVision(
-            actions.ContinuousActions[0],
-            actions.ContinuousActions[1]
+            actions.ContinuousActions[0] * 180f,
+            actions.ContinuousActions[1] * 90f,  // 值域映射（在鼠标模式下统一为180f，保证用户体验一致）
+            false
         );
 
-        // 准星尝试锁定离准心夹角最近的敌人
-        playerController.TryLockOn(nearestCrosshairEnemy);
+        // 方案：准星尝试锁定离准心夹角最近的敌人（训练后收敛为低头/抬头小陀螺）
+        // playerController.TryLockOn(nearestCrosshairEnemy);
     }
 }

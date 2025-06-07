@@ -573,7 +573,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 3
+    VectorObservationSize: 0
     NumStackedVectorObservations: 5
     m_ActionSpec:
       m_NumContinuousActions: 2
@@ -582,7 +582,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 2aff527ce64654d7ebad5386539cb707, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: 167aa20fc4690464c9bba5243410db8b, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: FPSBehavior
